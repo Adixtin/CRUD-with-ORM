@@ -1,6 +1,7 @@
 from typing import List
 
-from app.models.user_model import db, User
+from app.models.user_model import User
+from app.models.database import db
 
 def get_all_users() -> List[User]:
     return User.query.all()

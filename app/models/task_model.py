@@ -1,9 +1,6 @@
 import datetime
-from email.policy import default
 from enum import Enum
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+from .database import db
 
 class Task (db.Model):
     __tablename__ = 'tasks'
@@ -26,4 +23,4 @@ class Task (db.Model):
     priority: Priority = db.Column(db.Enum(Priority), default=Priority.MEDIUM ,nullable=False)
 
     def __repr__(self) -> str:
-        return f"<Task {self.task_name}"
+        return f"<Task {self.task_name}>"

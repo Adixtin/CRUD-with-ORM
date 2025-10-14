@@ -1,6 +1,7 @@
 import pytest
 import datetime
-from app.models.task_model import db, Task
+from app.models.task_model import Task
+from app.models.database import db
 
 @pytest.fixture
 def app():
