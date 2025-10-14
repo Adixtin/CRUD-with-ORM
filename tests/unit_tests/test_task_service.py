@@ -17,7 +17,8 @@ def fake_task():
     return task
 
 def test_create_task(fake_task):
-    with patch("app.service.task_service.Task", return_value=fake_task) as mock_task, \
+    with patch(""
+               "app.service.task_service.Task", return_value=fake_task) as mock_task, \
          patch("app.service.task_service.db.session.add") as mock_add, \
          patch("app.service.task_service.db.session.commit") as mock_commit:
 

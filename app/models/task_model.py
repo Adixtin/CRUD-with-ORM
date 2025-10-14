@@ -1,6 +1,5 @@
 import datetime
 from enum import Enum
-from .user_model import User
 from .database import db
 
 class Task (db.Model):
@@ -29,10 +28,10 @@ class Task (db.Model):
             "task_id": self.task_id,
             "user_id": self.user_id,
             "task_name": self.task_name,
-            "creation_time": self.creation_time,
-            "due_date": self.due_date,
-            "status": self.status,
-            "priority": self.priority,
+            "creation_time": self.creation_time.isoformat() if self.creation_time else None,
+            "due_date": self.due_date.isoformat() if self.due_date else None,
+            "status": self.status.value if self.status else self.status.PENDING,
+            "priority": self.priority.value if self.priority else self.priority.MEDIUM,
         }
 
     def __repr__(self) -> str:
