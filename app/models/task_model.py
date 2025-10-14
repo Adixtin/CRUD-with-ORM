@@ -24,5 +24,16 @@ class Task (db.Model):
     status: Status = db.Column(db.Enum(Status), default=Status.PENDING ,nullable=False)
     priority: Priority = db.Column(db.Enum(Priority), default=Priority.MEDIUM ,nullable=False)
 
+    def to_dict(self):
+        return {
+            "task_id": self.task_id,
+            "user_id": self.user_id,
+            "task_name": self.task_name,
+            "creation_time": self.creation_time,
+            "due_date": self.due_date,
+            "status": self.status,
+            "priority": self.priority,
+        }
+
     def __repr__(self) -> str:
         return f"<Task {self.task_name}>"
