@@ -1,5 +1,6 @@
 import datetime
 from enum import Enum
+from .user_model import User
 from .database import db
 
 class Task (db.Model):
@@ -16,6 +17,7 @@ class Task (db.Model):
         HIGH = "high"
 
     task_id: int = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), nullable=False)
     task_name: str = db.Column(db.String, nullable=False)
     creation_time: datetime.datetime = db.Column(db.DateTime, default=datetime.datetime.now)
     due_date: datetime.datetime = db.Column(db.DateTime)
