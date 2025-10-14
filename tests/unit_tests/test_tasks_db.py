@@ -28,14 +28,12 @@ def test_create_task(session):
     from app.models.user_model import User
     from app.db.db_task import create_task, get_task_by_id
 
-    # Create a user first
     user = User(username="Alice", role="admin")
     session.add(user)
     session.commit()
 
     due_date = datetime.datetime(2024, 9, 14, 12, 0, 0)
 
-    # Use exact enum values (lowercase)
     task = create_task(user.user_id, "shopping", due_date, "pending", "high")
 
     assert task.task_id is not None
@@ -71,6 +69,5 @@ def test_delete_task(session):
     assert result is True
     assert get_task_by_id(task.task_id) is None
 
-    # Deleting non-existent task
     result = delete_task(9999)
     assert result is False
