@@ -6,12 +6,22 @@ class TaskORM(db.Model):
     __tablename__ = "tasks"
 
     task_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), nullable=False)
     task_name = db.Column(db.String, nullable=False)
     creation_time = db.Column(db.DateTime, default=db.func.now())
     due_date = db.Column(db.DateTime)
     status = db.Column(db.Enum(Status), default=Status.PENDING, nullable=False)
     priority = db.Column(db.Enum(Priority), default=Priority.MEDIUM, nullable=False)
+
+
+    def to_dict(self):
+        return {
+            "task_id": self.task_id,
+            "task_name": self.task_name,
+            "due_date": self.due_date.isoformat(),
+            "status": self.status,
+            "priority": self.priority
+        }
 
     def to_domain(self) -> Task:
         task = Task(

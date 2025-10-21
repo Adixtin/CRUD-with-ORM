@@ -2,6 +2,7 @@ from typing import List
 
 from app.models.user_model import User
 from app.models.database import db
+from sqlalchemy.orm import relationship
 
 class UserORM(db.Model):
     __tablename__ = 'users'
@@ -10,6 +11,17 @@ class UserORM(db.Model):
     username = db.Column(db.String(255), unique=True, nullable=False)
     role = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False)
+    
+    tasks = relationship("TaskORM", backref="user", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        return {
+            "user_id": self.user_id,
+            "username": self.username,
+            "role": self.role,
+            "created_at": self.created_at.isoformat(),
+            "tasks": [task.to_dict() for task in self.tasks]
+        }
 
     def to_domain(self) -> User:
         user = User(

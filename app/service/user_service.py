@@ -1,6 +1,8 @@
 from typing import List, Optional
+from datetime import datetime
 from app.models.user_model import User
 from app.repositories.db_user import UserORM
+from app.repositories.db_task import TaskORM
 from app.models.database import db
 
 
@@ -30,14 +32,20 @@ class UserService:
         domain_user = User(
             username=username,
             role=role,
+            created_at=datetime.now(),
         )
-        orm_user = UserORM.from_domain(domain_user)
+        orm_user = UserORM.form_domain(domain_user)
         db.session.add(orm_user)
         db.session.commit()
         return orm_user.to_domain()
 
     @staticmethod
     def delete_user(user_id: int) -> bool:
+        tasks = TaskORM.query.filter_by(user_id=user_id).all()
+        for t in tasks:
+            db.session.delete(t)
+        db.session.commit()
+
         orm_user = UserORM.query.get(user_id)
         if orm_user:
             db.session.delete(orm_user)

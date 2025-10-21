@@ -1,12 +1,13 @@
 from datetime import datetime
 from dataclasses import dataclass
+from typing import Optional
 
 @dataclass
 class User:
-    user_id: int
-    username: str
-    role: str
-    created_at: datetime
+    user_id: Optional[int] = None
+    username: str = ""
+    role: str = "user"
+    created_at: Optional[datetime] = None
 
     def to_dict(self):
         return {

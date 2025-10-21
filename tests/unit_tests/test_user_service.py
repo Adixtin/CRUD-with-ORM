@@ -49,6 +49,24 @@ def test_get_user_by_username(sample_user):
         mock_orm.query.get.assert_called_once_with("alice")
 
 
+def test_create_user():
+    with patch("app.service.user_service.UserORM") as mock_orm, \
+         patch("app.service.user_service.db.session") as mock_db_session:
+
+        created_at = datetime.now()
+
+        mock_orm_instance = MagicMock()
+        mock_orm.from_domain.return_value = mock_orm_instance
+        mock_orm_instance.to_domain.return_value = User(user_id=1, username="alice", role="user", created_at=created_at)
+
+        result = UserService.create_user(username="alice", role="user")
+
+        assert result.username == "alice"
+        mock_orm.from_domain.assert_called_once()
+        mock_db_session.add.assert_called_once_with(mock_orm_instance)
+        mock_db_session.commit.assert_called_once()
+
+
 def test_delete_user_success():
     mock_orm_instance = MagicMock()
     with patch("app.service.user_service.UserORM") as mock_orm, \
