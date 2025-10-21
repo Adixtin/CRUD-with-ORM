@@ -1,4 +1,3 @@
-import datetime
 from typing import List, Optional
 from app.models.database import db
 from app.models.task_model import Task, Status, Priority

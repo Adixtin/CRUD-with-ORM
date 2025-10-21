@@ -1,73 +1,79 @@
 import pytest
 import datetime
-from sqlalchemy.exc import IntegrityError
-from app.models.task_model import Task
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from app.models.database import db
-from app.repositories.db_task import get_task_by_id, create_task, delete_task, get_tasks_by_user
+from app.models.task_model import Task, Status, Priority
+from app.repositories.db_task import TaskORM, get_tasks_by_user, get_task_by_id, create_task, delete_task
 
-@pytest.fixture
-def app():
+@pytest.fixture(scope="module")
+def test_app():
     from flask import Flask
     app = Flask(__name__)
-    app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
     db.init_app(app)
+
     with app.app_context():
         db.create_all()
         yield app
-        db.session.remove()
         db.drop_all()
 
+
 @pytest.fixture
-def session(app):
-    return db.session
+def session(test_app):
+    with test_app.app_context():
+        yield db.session
+        db.session.rollback()
+
 
 def test_create_task(session):
-    from app.models.user_model import User
-    from app.repositories.db_task import create_task, get_task_by_id
+    task = Task(user_id=1, task_name="Test ORM Task", due_date=datetime.datetime(2025, 12, 31))
+    created = create_task(task)
 
-    user = User(username="Alice", role="admin")
-    session.add(user)
-    session.commit()
+    assert created.task_id is not None
+    assert created.task_name == "Test ORM Task"
+    assert created.status == Status.PENDING
+    assert created.priority == Priority.MEDIUM
 
-    due_date = datetime.datetime(2024, 9, 14, 12, 0, 0)
+    orm_task = TaskORM.query.get(created.task_id)
+    assert orm_task.task_name == "Test ORM Task"
 
-    task = create_task(user.user_id, "shopping", due_date, "pending", "high")
 
-    assert task.task_id is not None
-    assert task.user_id == user.user_id
-    assert task.task_name == "shopping"
-    assert task.status.value == "pending"
-    assert task.priority.value == "high"
-    assert task.due_date == due_date
+def test_get_task_by_id(session):
+    task = Task(user_id=2, task_name="Find Me Task")
+    created = create_task(task)
 
-    fetched = get_task_by_id(task.task_id)
-    assert fetched is not None
-    assert fetched.task_name == "shopping"
+    found = get_task_by_id(created.task_id)
+    assert found is not None
+    assert found.task_name == "Find Me Task"
 
-def test_get_task_by_id_returns_none(session):
-    fetched = get_task_by_id(999)
-    assert fetched is None
+    not_found = get_task_by_id(9999)
+    assert not_found is None
+
 
 def test_get_tasks_by_user(session):
-    due_date = datetime.datetime(2024, 9, 14, 12, 0, 0)
-    t1 = create_task(1, "Task1", due_date, "pending", "medium")
-    t2 = create_task(1, "Task2", due_date, "in_progress", "high")
-    t3 = create_task(2, "Task3", due_date, "completed", "low")
+    tasks = [
+        Task(user_id=3, task_name="Task 1"),
+        Task(user_id=3, task_name="Task 2"),
+        Task(user_id=4, task_name="Other User Task")
+    ]
+    for t in tasks:
+        create_task(t)
 
-    tasks_user1 = get_tasks_by_user(1)
-    assert tasks_user1 is not None
-    assert tasks_user1.task_id in [t1.task_id, t2.task_id]
+    user_tasks = get_tasks_by_user(3)
+    assert len(user_tasks) == 2
+    assert all(t.user_id == 3 for t in user_tasks)
+
 
 def test_delete_task(session):
-    due_date = datetime.datetime(2024, 9, 14, 12, 0, 0)
-    task = create_task(1, "to_delete", due_date, "PENDING", "LOW")
+    task = Task(user_id=5, task_name="Delete Me")
+    created = create_task(task)
 
-    result = delete_task(task.task_id)
-    assert result is True
-    assert get_task_by_id(task.task_id) is None
+    success = delete_task(created.task_id)
+    assert success is True
 
-    result = delete_task(9999)
-    assert result is False
+    assert get_task_by_id(created.task_id) is None
+
+    fail = delete_task(9999)
+    assert fail is False
