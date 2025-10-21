@@ -19,8 +19,8 @@ def fake_task():
 def test_create_task(fake_task):
     with patch(""
                "app.service.task_service.Task", return_value=fake_task) as mock_task, \
-         patch("app.service.task_service.db.session.add") as mock_add, \
-         patch("app.service.task_service.db.session.commit") as mock_commit:
+         patch("app.service.task_service.repositories.session.add") as mock_add, \
+         patch("app.service.task_service.repositories.session.commit") as mock_commit:
 
         task = service.create_task(
             user_id=1,
@@ -75,8 +75,8 @@ def test_delete_task_success():
     fake_task_class.query.get.return_value = fake_task
 
     with patch("app.service.task_service.Task", fake_task_class), \
-         patch("app.service.task_service.db.session.delete") as mock_delete, \
-         patch("app.service.task_service.db.session.commit") as mock_commit:
+         patch("app.service.task_service.repositories.session.delete") as mock_delete, \
+         patch("app.service.task_service.repositories.session.commit") as mock_commit:
 
         result = service.delete_task(1)
         fake_task_class.query.get.assert_called_once_with(1)

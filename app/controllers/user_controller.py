@@ -1,17 +1,14 @@
-# app/controllers/user_controller.py
 from flask import Blueprint, request, jsonify
 from app.service.user_service import UserService
 
 user_service = UserService()
 user_bp = Blueprint("user", __name__)
 
-# Get all users
 @user_bp.route("/users", methods=["GET"])
 def get_all_users():
     users = user_service.get_all_users()
     return jsonify([user.to_dict() for user in users]), 200
 
-# Get user by ID
 @user_bp.route("/users/<int:user_id>", methods=["GET"])
 def get_user_by_id(user_id):
     user = user_service.get_user_by_id(user_id)
@@ -19,7 +16,6 @@ def get_user_by_id(user_id):
         return jsonify(user.to_dict()), 200
     return jsonify({"message": "User not found"}), 404
 
-# Get user by username
 @user_bp.route("/users/username/<string:username>", methods=["GET"])
 def get_user_by_username(username):
     user = user_service.get_user_by_username(username)
@@ -27,7 +23,6 @@ def get_user_by_username(username):
         return jsonify(user.to_dict()), 200
     return jsonify({"message": "User not found"}), 404
 
-# Create new user
 @user_bp.route("/users", methods=["POST"])
 def create_user():
     data = request.get_json()
@@ -37,7 +32,6 @@ def create_user():
     )
     return jsonify(user.to_dict()), 201
 
-# Delete user
 @user_bp.route("/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
     success = user_service.delete_user(user_id)

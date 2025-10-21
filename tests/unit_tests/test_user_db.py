@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from app.models.user_model import User
 from app.models.database import db
-from app.db.db_user import get_all_users, get_user_by_id, create_user, delete_user
+from app.repositories.db_user import get_all_users, get_user_by_id, create_user, delete_user
 
 @pytest.fixture
 def app():

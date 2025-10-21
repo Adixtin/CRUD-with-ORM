@@ -37,8 +37,6 @@ class TaskORM(db.Model):
             priority=task.priority
         )
 
-# --- Repository functions ---
-
 def get_tasks_by_user(user_id: int) -> List[Task]:
     orm_tasks = TaskORM.query.filter_by(user_id=user_id).all()
     return [t.to_domain() for t in orm_tasks]

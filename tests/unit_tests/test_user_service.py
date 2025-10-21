@@ -15,8 +15,8 @@ def fake_user():
 
 
 def test_create_user(fake_user):
-    with patch("app.service.user_service.db.session.add") as mock_add, \
-         patch("app.service.user_service.db.session.commit") as mock_commit, \
+    with patch("app.service.user_service.repositories.session.add") as mock_add, \
+         patch("app.service.user_service.repositories.session.commit") as mock_commit, \
          patch("app.service.user_service.User", return_value=fake_user):
 
         user = service.create_user(username="Alice", role="admin")
@@ -73,8 +73,8 @@ def test_delete_user_success(fake_user):
     fake_user_class.query.get.return_value = fake_user
 
     with patch("app.service.user_service.User", fake_user_class), \
-         patch("app.service.user_service.db.session.delete") as mock_delete, \
-         patch("app.service.user_service.db.session.commit") as mock_commit:
+         patch("app.service.user_service.repositories.session.delete") as mock_delete, \
+         patch("app.service.user_service.repositories.session.commit") as mock_commit:
 
         result = service.delete_user(1)
         fake_user_class.query.get.assert_called_once_with(1)

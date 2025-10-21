@@ -1,5 +1,7 @@
 from typing import List, Optional
-from app.models.user_model import User
+from datetime import datetime
+from app.models.user_model import User  # for domain model and enums
+from app.repositories.db_user import UserORM
 from app.models.database import db
 
 
@@ -7,28 +9,39 @@ class UserService:
 
     @staticmethod
     def get_all_users() -> List[User]:
-        return User.query.all()
+        return [t.to_domain() for t in UserORM.query.all()]
 
     @staticmethod
     def get_user_by_id(user_id: int) -> Optional[User]:
-        return User.query.get(user_id)
+        orm_user = UserORM.query.get(user_id)
+        if orm_user is None:
+            return None
+        return orm_user.to_domain()
 
     @staticmethod
     def get_user_by_username(username: str) -> Optional[User]:
-        return User.query.filter_by(username=username).first()
+        return UserORM.query.get(username)
 
     @staticmethod
-    def create_user(username: str, role: str = "user") -> User:
-        user = User(username=username, role=role)
-        db.session.add(user)
+    def create_user(
+            username: str,
+            role: str = "user",
+    ) -> User:
+
+        domain_user = User(
+            username=username,
+            role=role,
+        )
+        orm_user = UserORM.from_domain(domain_user)
+        db.session.add(orm_user)
         db.session.commit()
-        return user
+        return orm_user.to_domain()
 
     @staticmethod
     def delete_user(user_id: int) -> bool:
-        user = User.query.get(user_id)
-        if user:
-            db.session.delete(user)
+        orm_user = UserORM.query.get(user_id)
+        if orm_user:
+            db.session.delete(orm_user)
             db.session.commit()
             return True
         return False

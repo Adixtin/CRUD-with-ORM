@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy.exc import IntegrityError
 from app.models.task_model import Task
 from app.models.database import db
-from app.db.db_task import get_task_by_id, create_task, delete_task, get_tasks_by_user
+from app.repositories.db_task import get_task_by_id, create_task, delete_task, get_tasks_by_user
 
 @pytest.fixture
 def app():
@@ -26,7 +26,7 @@ def session(app):
 
 def test_create_task(session):
     from app.models.user_model import User
-    from app.db.db_task import create_task, get_task_by_id
+    from app.repositories.db_task import create_task, get_task_by_id
 
     user = User(username="Alice", role="admin")
     session.add(user)
