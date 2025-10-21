@@ -1,7 +1,7 @@
 from typing import List, Optional
 from datetime import datetime
-from app.models.task_model import Task, Status, Priority  # for domain model and enums
-from app.repositories.db_task import TaskORM, get_task_by_id as repo_get_task_by_id
+from app.models.task_model import Task, Status, Priority
+from app.repositories.db_task import TaskORM
 from app.models.database import db
 
 class TaskService:

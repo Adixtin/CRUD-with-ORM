@@ -1,94 +1,105 @@
 import datetime
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+from app.models.task_model import Task, Status, Priority
 from app.service.task_service import TaskService
 
-service = TaskService()
 
 @pytest.fixture
-def fake_task():
-    task = MagicMock()
-    task.task_id = 1
-    task.user_id = 1
-    task.task_name = "Test Task"
-    task.status.value = "pending"
-    task.priority.value = "medium"
-    task.due_date = datetime.datetime(2024, 10, 14, 12, 0, 0)
-    return task
+def sample_task():
+    return Task(
+        user_id=1,
+        task_name="Test Task",
+        task_id=10,
+        creation_time=datetime.datetime(2025, 10, 21),
+        due_date=datetime.datetime(2025, 12, 31),
+        status=Status.PENDING,
+        priority=Priority.MEDIUM
+    )
 
-def test_create_task(fake_task):
-    with patch(""
-               "app.service.task_service.Task", return_value=fake_task) as mock_task, \
-         patch("app.service.task_service.repositories.session.add") as mock_add, \
-         patch("app.service.task_service.repositories.session.commit") as mock_commit:
 
-        task = service.create_task(
+def test_get_all_tasks(sample_task):
+    mock_orm_task = MagicMock(to_domain=MagicMock(return_value=sample_task))
+    with patch("app.service.task_service.TaskORM") as mock_orm:
+        mock_orm.query.all.return_value = [mock_orm_task]
+
+        result = TaskService.get_all_tasks()
+        assert len(result) == 1
+        assert result[0].task_name == "Test Task"
+
+
+def test_get_task_by_id_found(sample_task):
+    mock_orm_task = MagicMock(to_domain=MagicMock(return_value=sample_task))
+    with patch("app.service.task_service.TaskORM") as mock_orm:
+        mock_orm.query.get.return_value = mock_orm_task
+
+        result = TaskService.get_task_by_id(10)
+        assert result.task_name == "Test Task"
+        mock_orm.query.get.assert_called_once_with(10)
+
+
+def test_get_task_by_id_not_found():
+    with patch("app.service.task_service.TaskORM") as mock_orm:
+        mock_orm.query.get.return_value = None
+
+        result = TaskService.get_task_by_id(999)
+        assert result is None
+
+
+def test_get_tasks_by_user(sample_task):
+    mock_orm_task = MagicMock(to_domain=MagicMock(return_value=sample_task))
+    with patch("app.service.task_service.TaskORM") as mock_orm:
+        mock_orm.query.filter_by.return_value.all.return_value = [mock_orm_task]
+
+        result = TaskService.get_tasks_by_user(user_id=1)
+        assert len(result) == 1
+        assert result[0].user_id == 1
+        mock_orm.query.filter_by.assert_called_once_with(user_id=1)
+
+
+def test_create_task():
+    with patch("app.service.task_service.TaskORM") as mock_orm, \
+         patch("app.service.task_service.db.session") as mock_db_session:
+
+        mock_orm_instance = MagicMock()
+        mock_orm.from_domain.return_value = mock_orm_instance
+        mock_orm_instance.to_domain.return_value = Task(
             user_id=1,
-            task_name="Test Task",
-            due_date=fake_task.due_date,
+            task_name="Created Task",
+            task_id=1,
+            status=Status.PENDING,
+            priority=Priority.MEDIUM
+        )
+
+        result = TaskService.create_task(
+            user_id=1,
+            task_name="Created Task",
             status="pending",
             priority="medium"
         )
 
-        mock_task.assert_called_once()
-        mock_add.assert_called_once_with(fake_task)
-        mock_commit.assert_called_once()
-        assert task.task_id == 1
-        assert task.task_name == "Test Task"
-        assert task.status.value == "pending"
-        assert task.priority.value == "medium"
+        assert result.task_name == "Created Task"
+        mock_orm.from_domain.assert_called_once()
+        mock_db_session.add.assert_called_once_with(mock_orm_instance)
+        mock_db_session.commit.assert_called_once()
 
-def test_get_task_by_id():
-    fake_task = MagicMock()
-    fake_task.task_name = "Test Task"
-
-    fake_task_class = MagicMock()
-    fake_task_class.query.get.return_value = fake_task
-
-    with patch("app.service.task_service.Task", fake_task_class):
-        task = service.get_task_by_id(1)
-        fake_task_class.query.get.assert_called_once_with(1)
-        assert task.task_name == "Test Task"
-
-def test_get_task_by_id_none():
-    fake_task_class = MagicMock()
-    fake_task_class.query.get.return_value = None
-
-    with patch("app.service.task_service.Task", fake_task_class):
-        task = service.get_task_by_id(999)
-        fake_task_class.query.get.assert_called_once_with(999)
-        assert task is None
-
-def test_get_tasks_by_user():
-    fake_task = MagicMock()
-    fake_task_class = MagicMock()
-    fake_task_class.query.filter_by.return_value.all.return_value = [fake_task]
-
-    with patch("app.service.task_service.Task", fake_task_class):
-        tasks = service.get_tasks_by_user(1)
-        fake_task_class.query.filter_by.assert_called_once_with(user_id=1)
-        assert tasks == [fake_task]
 
 def test_delete_task_success():
-    fake_task = MagicMock()
-    fake_task_class = MagicMock()
-    fake_task_class.query.get.return_value = fake_task
+    mock_orm_instance = MagicMock()
+    with patch("app.service.task_service.TaskORM") as mock_orm, \
+         patch("app.service.task_service.db.session") as mock_db_session:
 
-    with patch("app.service.task_service.Task", fake_task_class), \
-         patch("app.service.task_service.repositories.session.delete") as mock_delete, \
-         patch("app.service.task_service.repositories.session.commit") as mock_commit:
+        mock_orm.query.get.return_value = mock_orm_instance
 
-        result = service.delete_task(1)
-        fake_task_class.query.get.assert_called_once_with(1)
-        mock_delete.assert_called_once_with(fake_task)
-        mock_commit.assert_called_once()
+        result = TaskService.delete_task(1)
         assert result is True
-        
-def test_delete_task_failure():
-    fake_task_class = MagicMock()
-    fake_task_class.query.get.return_value = None
+        mock_db_session.delete.assert_called_once_with(mock_orm_instance)
+        mock_db_session.commit.assert_called_once()
 
-    with patch("app.service.task_service.Task", fake_task_class):
-        result = service.delete_task(999)
-        fake_task_class.query.get.assert_called_once_with(999)
+
+def test_delete_task_not_found():
+    with patch("app.service.task_service.TaskORM") as mock_orm:
+        mock_orm.query.get.return_value = None
+
+        result = TaskService.delete_task(999)
         assert result is False
