@@ -1,5 +1,4 @@
 import datetime
-import pytest
 from app.models.task_model import Task, Status, Priority  # adjust import to your path
 
 

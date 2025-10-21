@@ -1,6 +1,5 @@
 from typing import List, Optional
-from datetime import datetime
-from app.models.user_model import User  # for domain model and enums
+from app.models.user_model import User
 from app.repositories.db_user import UserORM
 from app.models.database import db
 
