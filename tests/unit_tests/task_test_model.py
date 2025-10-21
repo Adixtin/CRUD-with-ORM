@@ -4,7 +4,6 @@ from app.models.task_model import Task, Status, Priority  # adjust import to you
 
 
 def test_task_defaults():
-    """Test that Task initializes with correct default values."""
     task = Task(user_id=1, task_name="Test Task")
 
     assert task.user_id == 1
@@ -17,7 +16,6 @@ def test_task_defaults():
 
 
 def test_task_to_dict_with_due_date():
-    """Test that to_dict includes all fields with a due date."""
     due_date = datetime.datetime(2025, 12, 25, 12, 0, 0)
     creation_time = datetime.datetime(2025, 10, 21, 8, 0, 0)
 
@@ -43,7 +41,6 @@ def test_task_to_dict_with_due_date():
 
 
 def test_task_to_dict_without_due_date():
-    """Test to_dict when due_date is None."""
     creation_time = datetime.datetime(2025, 1, 1, 10, 0, 0)
     task = Task(
         task_id=3,
@@ -62,7 +59,6 @@ def test_task_to_dict_without_due_date():
 
 
 def test_enum_values():
-    """Ensure enum string values are correct."""
     assert Status.PENDING.value == "pending"
     assert Status.IN_PROGRESS.value == "in_progress"
     assert Status.COMPLETED.value == "completed"
@@ -73,6 +69,5 @@ def test_enum_values():
 
 
 def test_task_repr():
-    """Ensure the __repr__ returns a readable format."""
     task = Task(user_id=1, task_name="Homework")
     assert repr(task) == "<Task Homework>"

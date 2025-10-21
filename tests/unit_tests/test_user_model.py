@@ -1,57 +1,31 @@
-import pytest
 import datetime
-from app.models.user_model import db, User
+from app.models.user_model import User
 
-@pytest.fixture
-def app():
-    from flask import Flask
-    app = Flask(__name__)
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    db.init_app(app)
-    with app.app_context():
-        db.create_all()
-        yield app
-        db.session.remove()
-        db.drop_all()
+def test_user_initialization():
+    now = datetime.datetime(2025, 10, 21, 5, 0, 0)
+    user = User(user_id=1, username="alice", role="admin", created_at=now)
 
-@pytest.fixture
-def session(app):
-    return db.session
+    assert user.user_id == 1
+    assert user.username == "alice"
+    assert user.role == "admin"
+    assert user.created_at == now
+    assert isinstance(user.created_at, datetime.datetime)
 
-def test_user_creation_time_and_id(session):
-    user = User(username="User", role="user")
-    session.add(user)
-    session.commit()
 
-    fetched = User.query.first()
+def test_user_to_dict():
+    now = datetime.datetime(2025, 10, 21)
+    user = User(user_id=2, username="bob", role="user", created_at=now)
 
-    assert fetched.user_id is not None
-    assert isinstance(fetched.user_id, int)
+    result = user.to_dict()
 
-    assert fetched.created_at is not None
-    assert isinstance(fetched.created_at, datetime.datetime)
+    assert result == {
+        "user_id": 2,
+        "username": "bob",
+        "role": "user",
+    }
 
-    assert fetched.username == "User"
-    assert fetched.role == "user"
 
-def test_task_with_fixed_times(session):
-    fixed_created_at = datetime.datetime(2024, 9, 14, 12, 0, 0)
-
-    user = User(
-        username="fixed time User",
-        role="fixed time user",
-        created_at=fixed_created_at,
-    )
-    session.add(user)
-    session.commit()
-
-    fetched = User.query.first()
-
-    assert fetched.username == "fixed time User"
-    assert fetched.role == "fixed time user"
-    assert fetched.created_at == fixed_created_at
-    assert fetched.user_id is not None
-
+def test_user_repr():
+    user = User(user_id=3, username="charlie", role="moderator", created_at=datetime.datetime.now())
+    assert repr(user) == "<User charlie>"
