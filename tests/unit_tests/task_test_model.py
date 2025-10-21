@@ -1,65 +1,78 @@
-import pytest
 import datetime
-from app.models.task_model import Task
-from app.models.database import db
+import pytest
+from app.models.task_model import Task, Status, Priority  # adjust import to your path
 
-@pytest.fixture
-def app():
-    from flask import Flask
-    app = Flask(__name__)
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    db.init_app(app)
-    with app.app_context():
-        db.create_all()
-        yield app
-        db.session.remove()
-        db.drop_all()
+def test_task_defaults():
+    """Test that Task initializes with correct default values."""
+    task = Task(user_id=1, task_name="Test Task")
 
-@pytest.fixture
-def session(app):
-    return db.session
+    assert task.user_id == 1
+    assert task.task_name == "Test Task"
+    assert task.status == Status.PENDING
+    assert task.priority == Priority.MEDIUM
+    assert isinstance(task.creation_time, datetime.datetime)
+    assert task.due_date is None
+    assert "<Task Test Task>" in repr(task)
 
-def test_task_id_and_creation_time(session):
-    task = Task(task_name="Task")
-    session.add(task)
-    session.commit()
 
-    fetched = Task.query.first()
-
-    assert fetched.task_id is not None
-    assert isinstance(fetched.task_id, int)
-
-    assert fetched.creation_time is not None
-    assert isinstance(fetched.creation_time, datetime.datetime)
-
-    assert fetched.status == Task.Status.PENDING
-    assert fetched.priority == Task.Priority.MEDIUM
-
-    assert fetched.task_name == "Task"
-
-def test_task_with_fixed_times(session):
-    fixed_creation = datetime.datetime(2024, 9, 14, 12, 0, 0)
-    fixed_due = datetime.datetime(2024, 9, 20, 18, 30, 0)
+def test_task_to_dict_with_due_date():
+    """Test that to_dict includes all fields with a due date."""
+    due_date = datetime.datetime(2025, 12, 25, 12, 0, 0)
+    creation_time = datetime.datetime(2025, 10, 21, 8, 0, 0)
 
     task = Task(
-        task_name="fixed time task",
-        creation_time=fixed_creation,
-        due_date=fixed_due,
-        status=Task.Status.IN_PROGRESS,
-        priority=Task.Priority.HIGH
+        task_id=10,
+        user_id=5,
+        task_name="Finish Project",
+        creation_time=creation_time,
+        due_date=due_date,
+        status=Status.IN_PROGRESS,
+        priority=Priority.HIGH
     )
-    session.add(task)
-    session.commit()
 
-    fetched = Task.query.first()
+    result = task.to_dict()
 
-    assert fetched.task_name == "fixed time task"
-    assert fetched.creation_time == fixed_creation
-    assert fetched.due_date == fixed_due
-    assert fetched.status == Task.Status.IN_PROGRESS
-    assert fetched.priority == Task.Priority.HIGH
-    assert fetched.task_id is not None
+    assert result["task_id"] == 10
+    assert result["user_id"] == 5
+    assert result["task_name"] == "Finish Project"
+    assert result["status"] == "in_progress"
+    assert result["priority"] == "high"
+    assert result["creation_time"] == creation_time.isoformat()
+    assert result["due_date"] == due_date.isoformat()
 
+
+def test_task_to_dict_without_due_date():
+    """Test to_dict when due_date is None."""
+    creation_time = datetime.datetime(2025, 1, 1, 10, 0, 0)
+    task = Task(
+        task_id=3,
+        user_id=2,
+        task_name="Read Book",
+        creation_time=creation_time,
+        due_date=None,
+    )
+
+    result = task.to_dict()
+
+    assert result["due_date"] is None
+    assert result["creation_time"] == creation_time.isoformat()
+    assert result["status"] == "pending"
+    assert result["priority"] == "medium"
+
+
+def test_enum_values():
+    """Ensure enum string values are correct."""
+    assert Status.PENDING.value == "pending"
+    assert Status.IN_PROGRESS.value == "in_progress"
+    assert Status.COMPLETED.value == "completed"
+
+    assert Priority.LOW.value == "low"
+    assert Priority.MEDIUM.value == "medium"
+    assert Priority.HIGH.value == "high"
+
+
+def test_task_repr():
+    """Ensure the __repr__ returns a readable format."""
+    task = Task(user_id=1, task_name="Homework")
+    assert repr(task) == "<Task Homework>"
